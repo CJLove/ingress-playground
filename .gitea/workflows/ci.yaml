@@ -47,7 +47,7 @@ jobs:
       - name: unicast
         uses: docker/build-push-action@v5
         with:
-          context: ./unicast
+          context: ./udpServer
           file: ./Containers/Dockerfile.udp-server
           push: true
           tags: fir.love.io:3005/udp-server:latest, fir.love.io:3005/udp-server:${{ github.run_number }}
@@ -55,7 +55,7 @@ jobs:
       - name: tcp
         uses: docker/build-push-action@v5
         with:
-          context: ./tcp
+          context: ./tcpServer
           file: ./Containers/Dockerfile.tcp-server
           push: true
           tags: fir.love.io:3005/tcp-server:latest, fir.love.io:3005/tcp-server:${{ github.run_number }}
