@@ -1,0 +1,49 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: udp-server
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: udp-server # has to match .spec.template.metadata.labels
+  serviceName: none
+  replicas: 1
+  minReadySeconds: 10 # by default is 0
+  template:
+    metadata:
+      labels:
+        app: udp-server # has to match .spec.selector.matchLabels
+        prometheus: "true"
+    spec:
+      terminationGracePeriodSeconds: 10
+      volumes:
+        - name: udp-server-cfg
+          configMap:
+            name: udp-server-cfg
+      containers:
+      - name: udp-server
+        image: fir.love.io:3005/udp-server:latest
+        ports:
+        - name: udp-server
+          containerPort: 5000
+          protocol: UDP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: udp-server-0-service
+  namespace: default
+  labels:
+    statefulset.kubernetes.io/pod-name: udp-server-0
+spec:
+  type: ClusterIP
+  ports:
+    - name: ingress
+      protocol: UDP
+      port: 5000
+      targetPort: 5000
+  selector:
+    statefulset.kubernetes.io/pod-name: udp-server-0

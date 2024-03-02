@@ -1,0 +1,2 @@
+/home/love/Development/ingress-playground/tcpServer/bin/linux/amd64/serverApp
+/home/love/Development/ingress-playground/udpServer/bin/linux/amd64/unicastApp

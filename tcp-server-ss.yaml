@@ -1,0 +1,49 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: tcp-server
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: tcp-server # has to match .spec.template.metadata.labels
+  serviceName: none
+  replicas: 1
+  minReadySeconds: 10 # by default is 0
+  template:
+    metadata:
+      labels:
+        app: tcp-server # has to match .spec.selector.matchLabels
+        prometheus: "true"
+    spec:
+      terminationGracePeriodSeconds: 10
+      volumes:
+        - name: tcp-server-cfg
+          configMap:
+            name: tcp-server-cfg
+      containers:
+      - name: tcp-server
+        image: fir.love.io:3005/tcp-server:latest
+        ports:
+        - name: tcp-server
+          containerPort: 5001
+          protocol: TCP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tcp-server-0-service
+  namespace: default
+  labels:
+    statefulset.kubernetes.io/pod-name: tcp-server-0
+spec:
+  type: ClusterIP
+  ports:
+    - name: ingress
+      protocol: TCP
+      port: 5001
+      targetPort: 5001
+  selector:
+    statefulset.kubernetes.io/pod-name: tcp-server-0
