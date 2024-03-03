@@ -1,0 +1,14 @@
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: tcp-server
+  namespace: default
+spec:
+  entryPoints:
+    - tcp-server
+  routes:
+    - match: HostSNI(`*`)
+      services:
+      - name: tcp-server-0-service
+        port: 5001

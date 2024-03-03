@@ -1,0 +1,13 @@
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: udp-server
+  namespace: default
+spec:
+  entryPoints:
+    - udp-server
+  routes:
+  - services:
+    - name: udp-server-0-service
+      port: 5000
