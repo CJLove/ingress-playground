@@ -65,7 +65,7 @@ void ServerApp::sendMsg(int idx, const char *data, size_t len) {
 
 void ServerApp::onReceiveClientData(const sockets::ClientHandle &client, const char *data, size_t size) {
     std::string str(reinterpret_cast<const char *>(data), size);
-    std::cout << "Client " << client << " Rcvd: " << str << "\n";
+    std::cout << "Client " << client << " Rcvd: " << str << std::endl;
     // Echo data back to client
     sendMsg(client, data,size);
 }
