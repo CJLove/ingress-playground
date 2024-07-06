@@ -102,6 +102,15 @@ public:
 #endif
     }
 
+    ssize_t RecvFrom(int sockfd, void *buf, size_t len, int flags, struct sockaddr *src, socklen_t *addrlen)
+    {
+#ifdef _WIN32
+        return ::recvfrom(sockfd, reinterpret_cast<char*>(buf), static_cast<int>(len), flags, src, addrlen);
+#else
+        return ::recvfrom(sockfd, buf, len, flags, src, addrlen);
+#endif
+    }
+
     ssize_t SendTo(int sockfd, const void *buf, size_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen) {
 #ifdef _WIN32
         return ::sendto(sockfd, reinterpret_cast<const char*>(buf), static_cast<int>(len), flags, dest_addr, addrlen);

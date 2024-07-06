@@ -9,6 +9,8 @@
 #include <thread>
 #if defined(FMT_SUPPORT)
 #include <fmt/core.h>
+#else
+#include <iostream>
 #endif
 
 namespace sockets {
@@ -411,7 +413,13 @@ private:
                 } else if (FD_ISSET(m_fd, &fds)) {
 
                     std::array<char, MAX_PACKET_SIZE> msg;
-                    ssize_t numOfBytesReceived = m_socketCore.Recv(m_fd, msg.data(), MAX_PACKET_SIZE, 0);
+                    sockaddr_in clntAddr;
+                    socklen_t addrLen = sizeof(clntAddr);
+                    ssize_t numOfBytesReceived = m_socketCore.RecvFrom(m_fd, msg.data(), MAX_PACKET_SIZE, 0, (sockaddr*)&clntAddr, (socklen_t*)&addrLen);
+
+                    std::string srcAddr = inet_ntoa(clntAddr.sin_addr);
+                    uint16_t srcPort = ntohs(clntAddr.sin_port);
+                    std::cout << "Data received from " << srcAddr << ":" << srcPort << "\n";
                     // Note: recv() returning 0 can happen for zero-length datagrams
                     if (numOfBytesReceived >= 0) {
                         publishUdpMsg(msg.data(), static_cast<size_t>(numOfBytesReceived));
