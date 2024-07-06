@@ -6,4 +6,4 @@ WORKDIR /opt/unicast
 
 COPY bin/${TARGETPLATFORM}/unicastApp .
 
-CMD ./unicastApp -l 5000 -p 5000 -a 192.168.1.253
+CMD ./unicastApp -l 5000 -p 5000 -a 192.168.1.137
