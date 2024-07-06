@@ -14,7 +14,7 @@ public:
 
     virtual ~UnicastApp() = default;
 
-    void onReceiveData(const char *data, size_t size) ;
+    void onReceiveData(const char *data, size_t size, std::string &srcAddr, uint16_t srcPort) ;
 
     void sendMsg(const char *data, size_t len);
 
@@ -40,10 +40,11 @@ void UnicastApp::sendMsg(const char *data, size_t len) {
     }
 }
 
-void UnicastApp::onReceiveData(const char *data, size_t size) {
+void UnicastApp::onReceiveData(const char *data, size_t size, std::string &srcAddr, uint16_t srcPort) {
     std::string str(reinterpret_cast<const char *>(data), size);
 
-    std::cout << "Received: " << str << std::endl;
+    std::cout << "Received: " << str << " from " << srcAddr << ":" << srcPort << std::endl;
+    m_unicast.sendMsgTo(data, size, srcAddr, srcPort);
 }
 
 void usage() {

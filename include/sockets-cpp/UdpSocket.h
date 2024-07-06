@@ -363,6 +363,55 @@ public:
         return ret;
     }
 
+    SocketRet sendMsgTo(const char *msg, size_t size, const std::string &addr, uint16_t port) {
+        SocketRet ret;
+        struct sockaddr_in sockaddr;
+        // store the remoteaddress for use by sendto()
+        memset(&sockaddr, 0, sizeof(sockaddr));
+        sockaddr.sin_family = AF_INET;
+        if (m_addrLookup.lookupHost(addr.c_str(), sockaddr.sin_addr.s_addr) != 0) {
+#if defined(FMT_SUPPORT)
+            ret.m_msg = fmt::format("Failed to resolve hostname {}", addr);
+#else
+            std::array<char,MSG_SIZE> msg;
+            (void)snprintf(msg.data(),msg.size(),"Failed to resolve hostname %s",addr.c_str());
+            ret.m_msg = msg.data();
+#endif
+            return ret;
+        }
+
+        sockaddr.sin_port = htons(port);
+        // If destination addr/port specified
+        if (sockaddr.sin_port != 0) {
+            ssize_t numBytesSent = m_socketCore.SendTo(
+                m_fd, &msg[0], size, 0, reinterpret_cast<struct sockaddr *>(&sockaddr), sizeof(sockaddr));
+            if (numBytesSent < 0) {  // send failed
+                ret.m_success = false;
+#if defined(FMT_SUPPORT)
+                ret.m_msg = fmt::format("Error: sendto() failed: {}", errno);
+#else
+                std::array<char,MSG_SIZE> msg;
+               (void)snprintf(msg.data(),msg.size(),"Error: sendto() failed: %d",errno);
+                ret.m_msg = msg.data();
+#endif
+                return ret;
+            }
+            if (static_cast<size_t>(numBytesSent) < size) {  // not all bytes were sent
+                ret.m_success = false;
+#if defined(FMT_SUPPORT)
+                ret.m_msg = fmt::format("Only {} bytes of {} was sent to client", numBytesSent, size);
+#else
+                std::array<char,MSG_SIZE> msg;
+                (void)snprintf(msg.data(), msg.size(), "Only %ld bytes out of %lu was sent to client", numBytesSent, size);
+                ret.m_msg = msg.data();
+#endif
+                return ret;
+            }
+        }
+        ret.m_success = true;
+        return ret;
+    }
+
     /**
      * @brief Shutdown the UDP socket
      */
@@ -388,8 +437,8 @@ private:
      * @param msg - pointer to the message data
      * @param msgSize - length of the message data
      */
-    void publishUdpMsg(const char *msg, size_t msgSize) {
-        m_callback.onReceiveData(msg, msgSize);
+    void publishUdpMsg(const char *msg, size_t msgSize, std::string &srcAddr, uint16_t srcPort) {
+        m_callback.onReceiveData(msg, msgSize, srcAddr, srcPort);
     }
 
     /**
@@ -417,12 +466,11 @@ private:
                     socklen_t addrLen = sizeof(clntAddr);
                     ssize_t numOfBytesReceived = m_socketCore.RecvFrom(m_fd, msg.data(), MAX_PACKET_SIZE, 0, (sockaddr*)&clntAddr, (socklen_t*)&addrLen);
 
-                    std::string srcAddr = inet_ntoa(clntAddr.sin_addr);
-                    uint16_t srcPort = ntohs(clntAddr.sin_port);
-                    std::cout << "Data received from " << srcAddr << ":" << srcPort << "\n";
                     // Note: recv() returning 0 can happen for zero-length datagrams
                     if (numOfBytesReceived >= 0) {
-                        publishUdpMsg(msg.data(), static_cast<size_t>(numOfBytesReceived));
+                        std::string srcAddr = inet_ntoa(clntAddr.sin_addr);
+                        uint16_t srcPort = ntohs(clntAddr.sin_port);
+                        publishUdpMsg(msg.data(), static_cast<size_t>(numOfBytesReceived),srcAddr,srcPort);
                     }
                 }
             }
